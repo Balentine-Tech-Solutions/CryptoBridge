@@ -6,6 +6,9 @@ const dotenv = require('dotenv');
 // Load environment variables
 dotenv.config();
 
+// Import database connection
+const { connectDB, disconnectDB } = require('./config/database');
+
 // Import middleware
 const { errorHandler, responseFormatter } = require('./middleware/handlers');
 const { verifyToken } = require('./middleware/auth');
@@ -36,7 +39,7 @@ app.use(responseFormatter);
 app.use('/api/auth', authRoutes);
 app.use('/api/', apiRoutes);
 app.use('/api/transactions', transactionRoutes);
-app.use('/api/portfolio', verifyToken, portfolioRoutes);
+app.use('/api/portfolio', portfolioRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -44,7 +47,8 @@ app.get('/health', (req, res) => {
     status: 'healthy',
     timestamp: new Date(),
     environment: NODE_ENV,
-    version: '1.0.0'
+    version: '1.0.0',
+    database: 'connected'
   });
 });
 
@@ -61,23 +65,40 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 // Start server
-const server = app.listen(PORT, () => {
-  console.log(`
+let server;
+
+const startServer = async () => {
+  try {
+    // Connect to MongoDB
+    await connectDB();
+
+    server = app.listen(PORT, () => {
+      console.log(`
 ╔════════════════════════════════════════╗
 ║      CryptoBridge API Server         ║
 ║           Running on Port ${PORT}          ║
 ║         Environment: ${NODE_ENV}        ║
+║          Database: Connected         ║
 ╚════════════════════════════════════════╝
-  `);
-});
+      `);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM received. Shutting down gracefully...');
-  server.close(() => {
+  server.close(async () => {
+    await disconnectDB();
     console.log('Server closed');
     process.exit(0);
   });
 });
+
+// Start the server
+startServer();
 
 module.exports = app;

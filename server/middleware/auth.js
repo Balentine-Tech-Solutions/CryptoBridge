@@ -15,7 +15,8 @@ function verifyToken(req, res, next) {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    req.userId = decoded.userId;
     req.user = decoded;
     next();
   } catch (error) {
@@ -29,10 +30,10 @@ function verifyToken(req, res, next) {
 /**
  * Generate JWT Token
  */
-function generateToken(userId, email) {
+function generateToken(userId) {
   return jwt.sign(
-    { userId, email },
-    process.env.JWT_SECRET,
+    { userId },
+    process.env.JWT_SECRET || 'your-secret-key',
     { expiresIn: process.env.JWT_EXPIRATION || '7d' }
   );
 }

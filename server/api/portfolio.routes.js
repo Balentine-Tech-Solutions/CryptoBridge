@@ -1,24 +1,28 @@
 // Portfolio Routes
 const express = require('express');
+const Portfolio = require('../models/Portfolio');
+const { verifyToken } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Mock portfolio database
-const portfolios = new Map();
-
 /**
- * Get Portfolio
+ * Get user portfolio
  * GET /api/portfolio
  */
-router.get('/', (req, res) => {
+router.get('/', verifyToken, async (req, res) => {
   try {
-    const userId = req.user.userId;
-    const portfolio = portfolios.get(userId) || {
-      userId,
-      assets: [],
-      totalValue: 0,
-      totalInvested: 0
-    };
+    let portfolio = await Portfolio.findOne({ userId: req.userId });
+
+    if (!portfolio) {
+      // Create portfolio if doesn't exist
+      portfolio = await Portfolio.create({
+        userId: req.userId,
+        assets: []
+      });
+    }
+
+    // Calculate metrics
+    portfolio.calculateMetrics();
 
     res.json({
       success: true,
@@ -33,45 +37,43 @@ router.get('/', (req, res) => {
 });
 
 /**
- * Add Asset to Portfolio
+ * Add asset to portfolio
  * POST /api/portfolio/assets
  */
-router.post('/assets', (req, res) => {
+router.post('/assets', verifyToken, async (req, res) => {
   try {
-    const userId = req.user.userId;
-    const { symbol, amount, purchasePrice } = req.body;
+    const { symbol, name, amount, purchasePrice, currentPrice } = req.body;
 
-    if (!symbol || !amount || !purchasePrice) {
+    if (!symbol || !name || !amount || !purchasePrice) {
       return res.status(400).json({
         success: false,
         error: 'Missing required fields'
       });
     }
 
-    let portfolio = portfolios.get(userId);
+    let portfolio = await Portfolio.findOne({ userId: req.userId });
+
     if (!portfolio) {
-      portfolio = {
-        userId,
-        assets: [],
-        totalValue: 0,
-        totalInvested: 0
-      };
+      portfolio = await Portfolio.create({
+        userId: req.userId,
+        assets: []
+      });
     }
 
-    const asset = {
-      id: `asset_${Date.now()}`,
+    // Add asset
+    portfolio.assets.push({
       symbol,
+      name,
       amount,
       purchasePrice,
-      value: amount * purchasePrice,
-      addedAt: new Date()
-    };
+      currentPrice: currentPrice || purchasePrice,
+      purchaseDate: new Date()
+    });
 
-    portfolio.assets.push(asset);
-    portfolio.totalValue += asset.value;
-    portfolio.totalInvested += asset.value;
-
-    portfolios.set(userId, portfolio);
+    // Save and calculate metrics
+    await portfolio.save();
+    portfolio.calculateMetrics();
+    await portfolio.save();
 
     res.status(201).json({
       success: true,
@@ -87,15 +89,13 @@ router.post('/assets', (req, res) => {
 });
 
 /**
- * Remove Asset from Portfolio
+ * Remove asset from portfolio
  * DELETE /api/portfolio/assets/:assetId
  */
-router.delete('/assets/:assetId', (req, res) => {
+router.delete('/assets/:assetId', verifyToken, async (req, res) => {
   try {
-    const userId = req.user.userId;
-    const { assetId } = req.params;
+    const portfolio = await Portfolio.findOne({ userId: req.userId });
 
-    const portfolio = portfolios.get(userId);
     if (!portfolio) {
       return res.status(404).json({
         success: false,
@@ -103,22 +103,63 @@ router.delete('/assets/:assetId', (req, res) => {
       });
     }
 
-    const assetIndex = portfolio.assets.findIndex(a => a.id === assetId);
-    if (assetIndex === -1) {
+    // Remove asset by id
+    portfolio.assets = portfolio.assets.filter(a => a._id.toString() !== req.params.assetId);
+
+    // Save and calculate metrics
+    await portfolio.save();
+    portfolio.calculateMetrics();
+    await portfolio.save();
+
+    res.json({
+      success: true,
+      message: 'Asset removed',
+      data: portfolio
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Update asset in portfolio
+ * PUT /api/portfolio/assets/:assetId
+ */
+router.put('/assets/:assetId', verifyToken, async (req, res) => {
+  try {
+    const { amount, currentPrice } = req.body;
+    const portfolio = await Portfolio.findOne({ userId: req.userId });
+
+    if (!portfolio) {
+      return res.status(404).json({
+        success: false,
+        error: 'Portfolio not found'
+      });
+    }
+
+    const asset = portfolio.assets.find(a => a._id.toString() === req.params.assetId);
+    if (!asset) {
       return res.status(404).json({
         success: false,
         error: 'Asset not found'
       });
     }
 
-    const removedAsset = portfolio.assets.splice(assetIndex, 1)[0];
-    portfolio.totalValue -= removedAsset.value;
+    // Update asset
+    if (amount !== undefined) asset.amount = amount;
+    if (currentPrice !== undefined) asset.currentPrice = currentPrice;
 
-    portfolios.set(userId, portfolio);
+    // Save and calculate metrics
+    await portfolio.save();
+    portfolio.calculateMetrics();
+    await portfolio.save();
 
     res.json({
       success: true,
-      message: 'Asset removed',
+      message: 'Asset updated',
       data: portfolio
     });
   } catch (error) {

@@ -1,12 +1,10 @@
 // Authentication Routes
 const express = require('express');
-const bcrypt = require('bcryptjs');
-const { generateToken } = require('../middleware/auth');
+const User = require('../models/User');
+const Portfolio = require('../models/Portfolio');
+const { generateToken, verifyToken } = require('../middleware/auth');
 
 const router = express.Router();
-
-// Mock user database (replace with MongoDB)
-const users = new Map();
 
 /**
  * Register endpoint
@@ -14,43 +12,59 @@ const users = new Map();
  */
 router.post('/register', async (req, res) => {
   try {
-    const { fullName, email, password } = req.body;
+    const { email, password, firstName, lastName } = req.body;
 
     // Validation
-    if (!fullName || !email || !password) {
+    if (!email || !password) {
       return res.status(400).json({
         success: false,
-        error: 'Missing required fields'
+        error: 'Email and password required'
+      });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({
+        success: false,
+        error: 'Password must be at least 8 characters'
       });
     }
 
     // Check if user exists
-    if (users.has(email)) {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
       return res.status(409).json({
         success: false,
-        error: 'User already exists'
+        error: 'User already registered'
       });
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
     // Create user
-    const userId = `user_${Date.now()}`;
-    users.set(email, {
-      id: userId,
-      fullName,
+    const user = await User.create({
       email,
-      password: hashedPassword,
-      createdAt: new Date(),
-      kyc: { status: 'pending' },
-      portfolio: { assets: [] }
+      password,
+      firstName: firstName || 'User',
+      lastName: lastName || ''
     });
+
+    // Create portfolio for user
+    await Portfolio.create({
+      userId: user._id,
+      assets: []
+    });
+
+    // Generate token
+    const token = generateToken(user._id);
 
     res.status(201).json({
       success: true,
       message: 'User registered successfully',
-      user: { id: userId, fullName, email }
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName
+      }
     });
   } catch (error) {
     res.status(500).json({
@@ -76,8 +90,8 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Find user
-    const user = users.get(email);
+    // Find user and include password field
+    const user = await User.findOne({ email }).select('+password');
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -86,7 +100,7 @@ router.post('/login', async (req, res) => {
     }
 
     // Verify password
-    const validPassword = await bcrypt.compare(password, user.password);
+    const validPassword = await user.matchPassword(password);
     if (!validPassword) {
       return res.status(401).json({
         success: false,
@@ -95,16 +109,50 @@ router.post('/login', async (req, res) => {
     }
 
     // Generate token
-    const token = generateToken(user.id, user.email);
+    const token = generateToken(user._id);
 
     res.json({
       success: true,
       message: 'Login successful',
       token,
       user: {
-        id: user.id,
-        fullName: user.fullName,
-        email: user.email
+        id: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Get current user
+ * GET /api/auth/me
+ */
+router.get('/me', verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        id: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        kycStatus: user.kycStatus,
+        preferences: user.preferences
       }
     });
   } catch (error) {

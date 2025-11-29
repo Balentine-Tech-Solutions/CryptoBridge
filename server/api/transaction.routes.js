@@ -1,41 +1,92 @@
 // Transaction Routes
 const express = require('express');
+const Transaction = require('../models/Transaction');
+const Portfolio = require('../models/Portfolio');
 const { verifyToken } = require('../middleware/auth');
-const TransactionEngine = require('../../core/transaction-engine/engine');
 
 const router = express.Router();
 
-// Mock transaction database
-const transactions = [];
+/**
+ * Get all transactions for user
+ * GET /api/transactions
+ */
+router.get('/', verifyToken, async (req, res) => {
+  try {
+    const transactions = await Transaction.find({ userId: req.userId })
+      .sort({ createdAt: -1 })
+      .limit(50);
+
+    res.json({
+      success: true,
+      count: transactions.length,
+      data: transactions
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
 
 /**
- * Create Transaction
+ * Get specific transaction
+ * GET /api/transactions/:id
+ */
+router.get('/:id', verifyToken, async (req, res) => {
+  try {
+    const transaction = await Transaction.findOne({
+      _id: req.params.id,
+      userId: req.userId
+    });
+
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        error: 'Transaction not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: transaction
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Create transaction
  * POST /api/transactions
  */
 router.post('/', verifyToken, async (req, res) => {
   try {
-    const { fromCurrency, toCurrency, amount, type } = req.body;
+    const { type, fromAsset, toAsset, fromAmount, toAmount, exchangeRate, description } = req.body;
 
-    if (!fromCurrency || !toCurrency || !amount || !type) {
+    // Validation
+    if (!type || !fromAsset || !toAsset || !fromAmount || !toAmount) {
       return res.status(400).json({
         success: false,
         error: 'Missing required fields'
       });
     }
 
-    const transaction = {
-      id: `TXN_${Date.now()}`,
-      userId: req.user.userId,
-      fromCurrency,
-      toCurrency,
-      amount,
+    // Create transaction
+    const transaction = await Transaction.create({
+      userId: req.userId,
       type,
-      status: 'completed',
-      createdAt: new Date(),
-      timestamp: Date.now()
-    };
-
-    transactions.push(transaction);
+      fromAsset,
+      toAsset,
+      fromAmount,
+      toAmount,
+      exchangeRate: exchangeRate || null,
+      description: description || '',
+      status: 'pending'
+    });
 
     res.status(201).json({
       success: true,
@@ -51,34 +102,21 @@ router.post('/', verifyToken, async (req, res) => {
 });
 
 /**
- * Get Transactions
- * GET /api/transactions
+ * Update transaction status
+ * PUT /api/transactions/:id
  */
-router.get('/', verifyToken, (req, res) => {
+router.put('/:id', verifyToken, async (req, res) => {
   try {
-    const userTransactions = transactions.filter(t => t.userId === req.user.userId);
+    const { status, completedAt } = req.body;
 
-    res.json({
-      success: true,
-      data: userTransactions,
-      count: userTransactions.length
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-/**
- * Get Transaction by ID
- * GET /api/transactions/:id
- */
-router.get('/:id', verifyToken, (req, res) => {
-  try {
-    const transaction = transactions.find(
-      t => t.id === req.params.id && t.userId === req.user.userId
+    const transaction = await Transaction.findOneAndUpdate(
+      { _id: req.params.id, userId: req.userId },
+      {
+        status,
+        completedAt: status === 'completed' ? new Date() : completedAt,
+        updatedAt: new Date()
+      },
+      { new: true }
     );
 
     if (!transaction) {
@@ -90,6 +128,7 @@ router.get('/:id', verifyToken, (req, res) => {
 
     res.json({
       success: true,
+      message: 'Transaction updated',
       data: transaction
     });
   } catch (error) {
