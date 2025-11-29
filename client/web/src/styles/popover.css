@@ -1,0 +1,59 @@
+/* Popover Component Styles */
+
+.popover-wrapper {
+  position: relative;
+}
+
+.popover-base {
+  position: absolute;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+}
+
+.popover-arrow {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  transform: rotate(45deg);
+}
+
+.popover-header {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.popover-body {
+  padding: 1rem;
+  color: var(--text-primary);
+}
+
+.popover-footer {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+/* Animations */
+@keyframes popoverFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.popover-base {
+  animation: popoverFadeIn 0.2s ease-out;
+}

@@ -1,0 +1,264 @@
+/* Accessibility Styles */
+
+/* High Contrast Mode */
+@media (prefers-contrast: more) {
+  :root {
+    --primary-color: #0033cc;
+    --text-primary: #000000;
+    --bg-primary: #ffffff;
+    --border-color: #000000;
+  }
+
+  :root[data-theme="dark"] {
+    --primary-color: #ffff00;
+    --text-primary: #ffffff;
+    --bg-primary: #000000;
+    --border-color: #ffffff;
+  }
+
+  button,
+  a {
+    border: 2px solid currentColor;
+  }
+
+  .glass,
+  .glass-elevated,
+  .glass-subtle {
+    background: var(--bg-primary);
+    border: 2px solid var(--border-color);
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Screen Reader Only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Focus Visible for Keyboard Navigation */
+:focus-visible {
+  outline: 3px solid var(--focus-color);
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--focus-color);
+  outline-offset: 2px;
+}
+
+/* Skip to Content Link */
+.skip-to-content {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--primary-color);
+  color: white;
+  padding: 8px;
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-to-content:focus {
+  top: 0;
+}
+
+/* Visible Focus for All Interactive Elements */
+button,
+a[href],
+input,
+select,
+textarea {
+  position: relative;
+}
+
+/* Enhanced Focus States */
+button:focus-visible::after,
+a[href]:focus-visible::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border: 2px solid var(--focus-color);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+/* Accessible Form Labels */
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+label[aria-required="true"]::after {
+  content: ' *';
+  color: var(--danger-color);
+}
+
+/* Error Messaging */
+.error-message {
+  color: var(--danger-color);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+[aria-invalid="true"] {
+  border-color: var(--danger-color) !important;
+}
+
+/* Loading States for Assistive Technology */
+[aria-busy="true"] {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Disabled States */
+:disabled,
+[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Text Alternatives */
+img,
+svg,
+[role="img"] {
+  display: block;
+}
+
+/* Minimum Touch Target Size */
+button,
+a,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="checkbox"],
+input[type="radio"] {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Color Not Alone */
+.alert,
+.error,
+.success,
+.warning {
+  padding: 1rem;
+  border-left: 4px solid;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.alert::before,
+.error::before,
+.success::before,
+.warning::before {
+  content: attr(data-icon);
+  font-weight: bold;
+  font-size: 1.2em;
+}
+
+.alert {
+  border-color: var(--info-color);
+  background: rgba(23, 162, 184, 0.1);
+}
+
+.error {
+  border-color: var(--danger-color);
+  background: rgba(220, 53, 69, 0.1);
+}
+
+.success {
+  border-color: var(--success-color);
+  background: rgba(40, 167, 69, 0.1);
+}
+
+.warning {
+  border-color: var(--warning-color);
+  background: rgba(255, 193, 7, 0.1);
+}
+
+/* Semantic HTML Emphasis */
+strong,
+b {
+  font-weight: 700;
+}
+
+em,
+i {
+  font-style: italic;
+}
+
+code {
+  background: var(--bg-secondary);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+}
+
+/* Heading Hierarchy */
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.2;
+  margin-bottom: 0.5em;
+}
+
+/* Link Styles */
+a {
+  color: var(--primary-color);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+a:visited {
+  color: var(--primary-color);
+}
+
+a:hover {
+  text-decoration-thickness: 3px;
+}
+
+/* List Styles for Screen Readers */
+ul, ol {
+  list-style-position: outside;
+  margin-left: 1.5em;
+}
+
+ul li::marker,
+ol li::marker {
+  font-weight: bold;
+}
