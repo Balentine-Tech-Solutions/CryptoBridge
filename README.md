@@ -65,6 +65,172 @@ CryptoBridge/
 
 ### Prerequisites
 - Node.js 16+
+- MongoDB 4.4+ (local or MongoDB Atlas cloud)
+- npm or yarn
+
+### Quick Start
+
+#### 1. Setup Repository
+```bash
+# Clone repository
+git clone https://github.com/Balentine-Tech-Solutions/CryptoBridge.git
+cd CryptoBridge
+
+# Install backend dependencies
+npm install
+
+# Install frontend dependencies
+cd client/web
+npm install
+cd ../..
+```
+
+#### 2. Configure Environment
+```bash
+cp .env.example .env
+```
+
+Update `.env` with MongoDB connection:
+```env
+MONGODB_URI=mongodb://localhost:27017/cryptobridge
+JWT_SECRET=your-super-secret-key-change-in-production
+PORT=5000
+NODE_ENV=development
+CORS_ORIGIN=http://localhost:3000
+```
+
+#### 3. Start MongoDB
+```powershell
+# Windows
+net start MongoDB
+
+# macOS/Linux
+mongod
+```
+
+#### 4. Run Application
+
+**Terminal 1 - Backend (port 5000):**
+```bash
+npm start
+```
+
+**Terminal 2 - Frontend (port 3000):**
+```bash
+cd client/web
+npm start
+```
+
+The app will open at `http://localhost:3000` with working authentication, dashboard, and portfolio management.
+
+## 📊 MVP Features
+
+### ✅ Authentication
+- User registration with email/password
+- Secure login with JWT tokens
+- Protected routes for authenticated users
+- User profile management
+
+### ✅ Dashboard
+- Portfolio overview with total value
+- Asset holdings display
+- Recent transaction history
+- Account performance metrics
+
+### ✅ Portfolio Management
+- View all cryptocurrency assets
+- Add new assets with purchase prices
+- Track asset allocation
+- Calculate gains/losses
+- Real-time market prices
+
+### ✅ Real Exchange Rates (via CoinGecko API)
+- Live cryptocurrency prices (16+ cryptocurrencies)
+- USD/EUR/GBP conversion rates
+- 24-hour price changes
+- Trading volume and market cap
+- Conversion amount calculations
+
+### ✅ Transaction History
+- Track all transactions (buy, sell, swap)
+- Transaction status (pending, completed, failed)
+- Detailed transaction records
+- Exchange rates at time of transaction
+
+### ✅ User Interface
+- Responsive design (mobile, tablet, desktop)
+- Light/dark theme toggle
+- Glass morphism components
+- Accessible navigation (WCAG 2.1 AA)
+- Real-time market data display
+
+## 🗄️ Database Architecture
+
+### MongoDB Collections
+- **users** - User accounts with authentication
+- **transactions** - Transaction history with details
+- **portfolios** - Asset holdings and performance
+
+See [DATABASE_SETUP.md](docs/DATABASE_SETUP.md) for complete schema documentation.
+
+## 📡 API Reference
+
+### Base URL
+```
+http://localhost:5000
+```
+
+### Authentication Endpoints
+- `POST /api/auth/register` - Create account
+- `POST /api/auth/login` - Login user
+- `GET /api/auth/me` - Get current user
+- `POST /api/auth/logout` - Logout user
+
+### Exchange Rates API
+- `GET /api/rates/:from/:to` - Get exchange rate (e.g., `/api/rates/BTC/USD`)
+- `GET /api/rates/prices?assets=BTC,ETH,BNB` - Get multiple prices
+- `GET /api/rates/details?assets=BTC,ETH` - Get detailed market info
+- `GET /api/rates/convert?from=BTC&to=USD&amount=0.5` - Calculate conversion
+
+### Portfolio Endpoints
+- `GET /api/portfolio` - Get user portfolio
+- `POST /api/portfolio/assets` - Add asset
+- `PUT /api/portfolio/assets/:id` - Update asset
+- `DELETE /api/portfolio/assets/:id` - Remove asset
+
+### Transaction Endpoints
+- `GET /api/transactions` - Get all transactions
+- `POST /api/transactions` - Create transaction
+- `GET /api/transactions/:id` - Get transaction details
+- `PUT /api/transactions/:id` - Update transaction status
+
+### Health Check
+- `GET /health` - Server health status
+
+## 🧪 Testing
+
+See [TESTING.md](docs/TESTING.md) for:
+- cURL/Postman API testing examples
+- Frontend testing workflow
+- Browser testing scenarios
+- Error scenario testing
+- Database verification
+- Performance load testing
+
+## 📚 Documentation
+
+- [API Documentation](docs/API.md) - Complete API reference
+- [Database Setup Guide](docs/DATABASE_SETUP.md) - MongoDB integration and schema
+- [Testing Guide](docs/TESTING.md) - Comprehensive testing procedures
+- [Architecture Guide](docs/ARCHITECTURE.md) - System design
+- [Deployment Guide](docs/deployment/) - Cloud deployment
+
+### Getting Started
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 16+
 - MongoDB 4.4+
 - npm or yarn
 
