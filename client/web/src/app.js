@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 // Import styles
 import './styles/index.css';
@@ -8,13 +8,23 @@ import './styles/theme.css';
 import './styles/glass.css';
 import './styles/popover.css';
 import './styles/accessibility.css';
+import './styles/pages.css';
 
 // Import components
 import Navbar from './components/Navbar/Navbar';
 
-// Import pages and components as needed
-// import HomePage from './pages/home';
-// import Dashboard from './pages/dashboard';
+// Import pages
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import DashboardPage from './pages/DashboardPage';
+import PortfolioPage from './pages/PortfolioPage';
+
+// Protected Route Component
+function ProtectedRoute({ children }) {
+  const token = localStorage.getItem('token');
+  return token ? children : <Navigate to="/login" />;
+}
 
 function App() {
   return (
@@ -23,7 +33,26 @@ function App() {
         <Navbar />
         <main className="app-main">
           <Routes>
-            {/* Routes will be configured here */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/portfolio"
+              element={
+                <ProtectedRoute>
+                  <PortfolioPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </main>
       </div>
