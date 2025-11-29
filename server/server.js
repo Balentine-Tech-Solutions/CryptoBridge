@@ -18,6 +18,7 @@ const authRoutes = require('./auth/routes');
 const apiRoutes = require('./api/routes');
 const transactionRoutes = require('./api/transaction.routes');
 const portfolioRoutes = require('./api/portfolio.routes');
+const ratesRoutes = require('./api/rates.routes');
 
 // Initialize Express app
 const app = express();
@@ -40,6 +41,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/', apiRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/portfolio', portfolioRoutes);
+app.use('/api/rates', ratesRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
